@@ -1,0 +1,27 @@
+.gestion-usuarios-container {
+    padding: 24px;
+    background-color: #f7f9fc;
+    min-height: 100vh;
+  }
+  
+  .titulo-usuarios {
+    margin-bottom: 16px;
+    font-weight: 600;
+    color: #1a1a1a;
+  }
+  
+  .boton-nuevo {
+    margin-bottom: 16px;
+  }
+  
+  .tabla-usuarios th {
+    background-color: #e8effc;
+    font-weight: bold;
+  }
+  
+  .dialogo-usuarios .MuiDialogTitle-root {
+    font-weight: bold;
+    background-color: #1976d2;
+    color: white;
+  }
+  

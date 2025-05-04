@@ -6,7 +6,8 @@ import {
   GoogleAuthProvider,
   FacebookAuthProvider
 } from "firebase/auth";
-import { app } from '../../../config/firebase';
+import { getDoc, doc } from "firebase/firestore";
+import { app, db } from '../../../config/firebase';
 import {
   Button, TextField, Container, Box, Typography,
   Snackbar, Alert, Divider
@@ -14,8 +15,6 @@ import {
 import { Link, useNavigate } from 'react-router-dom';
 import '../LOGIN/Login.css';
 import Logo from '../../img/Innovar Proyectos - Logo.png';
-
-// Íconos
 import { FaGoogle, FaFacebookF } from 'react-icons/fa';
 
 const auth = getAuth(app);
@@ -28,12 +27,28 @@ function Login() {
   const [openSnackbar, setOpenSnackbar] = useState(false);
   const navigate = useNavigate();
 
+  const guardarUsuario = (nombre, rol) => {
+    localStorage.setItem('userName', nombre);
+    localStorage.setItem('userRole', rol);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
-      console.log("Login exitoso", user);
+
+      // 🔍 Consultar Firestore
+      const userDocRef = doc(db, "users", user.uid);
+      const userDocSnap = await getDoc(userDocRef);
+
+      if (userDocSnap.exists()) {
+        const userData = userDocSnap.data();
+        guardarUsuario(`${userData.name} ${userData.lastName}`, userData.role);
+      } else {
+        guardarUsuario(user.email, 'Sin rol');
+      }
+
       navigate('/panel');
     } catch (error) {
       console.error("Error al iniciar sesión:", error.message);
@@ -45,7 +60,9 @@ function Login() {
     try {
       const result = await signInWithPopup(auth, googleProvider);
       const user = result.user;
-      console.log("Login con Google exitoso:", user);
+
+      // No hay Firestore si se registra por Google directamente
+      guardarUsuario(user.displayName || user.email, 'Sin rol');
       navigate('/panel');
     } catch (error) {
       console.error("Error con Google Sign-In:", error.message);
@@ -57,7 +74,8 @@ function Login() {
     try {
       const result = await signInWithPopup(auth, facebookProvider);
       const user = result.user;
-      console.log("Login con Facebook exitoso:", user);
+
+      guardarUsuario(user.displayName || user.email, 'Sin rol');
       navigate('/panel');
     } catch (error) {
       console.error("Error con Facebook Sign-In:", error.message);
@@ -87,9 +105,9 @@ function Login() {
             label="Contraseña"
             variant="outlined"
             fullWidth
+            type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            type="password"
             margin="normal"
             required
           />

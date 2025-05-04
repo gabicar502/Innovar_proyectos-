@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import {
   Container, TextField, Button, Typography, Box, MenuItem, Snackbar, Alert
 } from "@mui/material";
-import { createUserWithEmailAndPassword } from "firebase/auth";
+import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
 import { auth, db } from "../../../config/firebase.js";
 import { useNavigate } from "react-router-dom";
@@ -24,9 +24,16 @@ export default function Register() {
     e.preventDefault();
 
     try {
+      // Crear usuario en Firebase Auth
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
+      // Guardar el nombre completo en el perfil de Auth
+      await updateProfile(user, {
+        displayName: `${name} ${lastName}`
+      });
+
+      // Guardar datos adicionales en Firestore
       await setDoc(doc(db, "users", user.uid), {
         name,
         lastName,
