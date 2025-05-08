@@ -5,31 +5,28 @@ import {
   Badge, Menu, MenuItem
 } from '@mui/material';
 import {
-  Search as SearchIcon,
-  Home as HomeIcon,
-  Assignment as AssignmentIcon,
-  AddBox as AddBoxIcon,
-  ListAlt as ListAltIcon,
-  ExitToApp as ExitToAppIcon,
-  ExpandLess,
-  ExpandMore,
-  Menu as MenuIcon,
-  NotificationsNone as NotificationsNoneIcon,
+  Search as SearchIcon, Home as HomeIcon, Assignment as AssignmentIcon,
+  AddBox as AddBoxIcon, ListAlt as ListAltIcon, ExitToApp as ExitToAppIcon,
+  ExpandLess, ExpandMore, Menu as MenuIcon, NotificationsNone as NotificationsNoneIcon,
   Person as PersonIcon
 } from '@mui/icons-material';
 import { signOut } from "firebase/auth";
 import { useNavigate, Outlet } from "react-router-dom";
-import { auth } from "../../../config/firebase";
+import { auth, db } from "../../../config/firebase";
+import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
 import Logo from "../../img/Innovar Proyectos - Logo.png";
 import './PanelPrincipal.css';
+import '../../components/PROYECTOS/NuevoProyecto'
 
 function PanelPrincipal() {
   const [open, setOpen] = useState(false);
-  const [query, setQuery] = useState('');
+  const [queryText, setQueryText] = useState('');
   const [submenu, setSubmenu] = useState({});
   const [userName, setUserName] = useState('');
   const [userRole, setUserRole] = useState('');
   const [anchorNotif, setAnchorNotif] = useState(null);
+  const [notificaciones, setNotificaciones] = useState([]);
+  const [leidas, setLeidas] = useState(false);
 
   const navigate = useNavigate();
 
@@ -40,20 +37,31 @@ function PanelPrincipal() {
     setUserRole(role);
   }, []);
 
+  useEffect(() => {
+    const q = query(collection(db, 'avances'), orderBy('fecha', 'desc'));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const nuevas = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return `🆕 ${data.autor || 'Alguien'} registró un avance en "${data.nombreProyecto || 'Proyecto'}"`;
+      });
+      setNotificaciones(nuevas);
+      setLeidas(false);
+    });
+    return () => unsubscribe();
+  }, []);
+
   const handleLogout = async () => {
     await signOut(auth);
     localStorage.clear();
     navigate('/');
   };
 
-  const handleNotifClick = (event) => setAnchorNotif(event.currentTarget);
-  const handleNotifClose = () => setAnchorNotif(null);
+  const handleNotifClick = (event) => {
+    setAnchorNotif(event.currentTarget);
+    setLeidas(true);
+  };
 
-  const notificaciones = [
-    '🔔 Proyecto "Reciclaje Verde" actualizado.',
-    '📅 Tienes un reporte mensual pendiente.',
-    '✅ Se aprobó el proyecto "Agua Limpia".'
-  ];
+  const handleNotifClose = () => setAnchorNotif(null);
 
   const toggleSubmenu = (name) => {
     setSubmenu((prev) => ({ ...prev, [name]: !prev[name] }));
@@ -89,14 +97,17 @@ function PanelPrincipal() {
               <ListItemIcon><HomeIcon /></ListItemIcon>
               <ListItemText primary="Inicio" />
             </ListItem>
-            <ListItem button onClick={() => toggleSubmenu('crearProyecto')}>
+            <ListItem button onClick={() => toggleSubmenu('Crear Proyectos')}>
               <ListItemIcon><AddBoxIcon /></ListItemIcon>
-              <ListItemText primary="Crear Proyecto" />
+              <ListItemText primary="Proyectos" />
               {submenu.crearProyecto ? <ExpandLess /> : <ExpandMore />}
             </ListItem>
             <Collapse in={submenu.crearProyecto} timeout="auto" unmountOnExit>
               <List component="div" disablePadding>
-                <ListItem button sx={{ pl: 4 }}><ListItemText primary="Nuevo Proyecto" /></ListItem>
+                <ListItem button onClick={() => navigate('/panel/nuevo-proyecto')}>
+                  <ListItemText primary="Nuevo Proyecto" />
+                </ListItem>
+                <ListItem button><ListItemText primary="Hilos o Avances" /></ListItem>
               </List>
             </Collapse>
             <ListItem button onClick={() => toggleSubmenu('reportes')}>
@@ -120,13 +131,15 @@ function PanelPrincipal() {
             </ListItem>
             <ListItem button onClick={() => toggleSubmenu('crearProyecto')}>
               <ListItemIcon><AddBoxIcon /></ListItemIcon>
-              <ListItemText primary="Crear Proyecto" />
+              <ListItemText primary="Proyectos" />
               {submenu.crearProyecto ? <ExpandLess /> : <ExpandMore />}
             </ListItem>
             <Collapse in={submenu.crearProyecto} timeout="auto" unmountOnExit>
               <List component="div" disablePadding>
-                <ListItem button sx={{ pl: 4 }}><ListItemText primary="Nuevo Proyecto" /></ListItem>
-                <ListItem button sx={{ pl: 4 }}><ListItemText primary="Desde Plantilla" /></ListItem>
+                <ListItem button onClick={() => navigate('/panel/nuevo-proyecto')} sx={{ pl: 4 }}>
+                  <ListItemText primary="Nuevo Proyecto" />
+                </ListItem>
+                <ListItem button sx={{ pl: 4 }}><ListItemText primary="Hilos o Avances" /></ListItem>
               </List>
             </Collapse>
             <ListItem button onClick={() => toggleSubmenu('reportes')}>
@@ -142,8 +155,8 @@ function PanelPrincipal() {
               </List>
             </Collapse>
             <ListItem button onClick={() => navigate('/panel/usuarios')}>
-             <ListItemIcon><PersonIcon /></ListItemIcon>
-             <ListItemText primary="Gestión de Usuarios" />
+              <ListItemIcon><PersonIcon /></ListItemIcon>
+              <ListItemText primary="Gestión de Usuarios" />
             </ListItem>
           </>
         );
@@ -187,12 +200,12 @@ function PanelPrincipal() {
           <SearchIcon />
           <InputBase
             placeholder="Buscar en el sistema..."
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            value={queryText}
+            onChange={(e) => setQueryText(e.target.value)}
             sx={{ ml: 2, flex: 1 }}
           />
           <IconButton onClick={handleNotifClick} sx={{ ml: 2 }}>
-            <Badge badgeContent={notificaciones.length} color="error">
+            <Badge badgeContent={leidas ? 0 : notificaciones.length} color="error">
               <NotificationsNoneIcon />
             </Badge>
           </IconButton>
@@ -218,7 +231,6 @@ function PanelPrincipal() {
           Bienvenido, {userName}
         </Typography>
 
-        {/* Vista anidada con rutas hijas (Outlet) */}
         <Outlet />
       </Box>
     </Box>
@@ -226,6 +238,3 @@ function PanelPrincipal() {
 }
 
 export default PanelPrincipal;
-
-
-

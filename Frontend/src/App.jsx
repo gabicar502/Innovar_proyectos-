@@ -5,7 +5,8 @@ import Registro from './components/REGISTER/Register';
 import Home from './pages/HOME/Home';
 import NotFound from './pages/NOTFOUND/NotFound';
 import PanelPrincipal from './components/INICIO/PanelPrincipal';
-import Usuarios from './components/Usuarios/Usuarios'; // 👈 cuidado con la mayúscula
+import Usuarios from './components/Usuarios/Usuarios';
+import NuevoProyecto from './components/PROYECTOS/NuevoProyecto'; // Asegúrate de que esta línea está presente
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
         {/* Rutas anidadas en el panel */}
         <Route path="/panel" element={<PanelPrincipal />}>
           <Route path="usuarios" element={<Usuarios />} />
+          <Route path="nuevo-proyecto" element={<NuevoProyecto />} /> {/* Esta es la ruta que agregamos */}
         </Route>
 
         <Route path="*" element={<NotFound />} />
@@ -27,8 +29,3 @@ function App() {
 }
 
 export default App;
-
-
-
-
-

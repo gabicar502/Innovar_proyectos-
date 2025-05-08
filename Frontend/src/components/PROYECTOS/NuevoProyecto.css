@@ -1,0 +1,68 @@
+/* NuevoProyecto.css */
+
+.NuevoProyecto-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 80vh;
+    background-color: #f4f6f9;
+  }
+  
+  .NuevoProyecto-paper {
+    padding: 40px;
+    width: 100%;
+    max-width: 600px;
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+  }
+  
+  .NuevoProyecto-title {
+    font-size: 28px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 30px;
+    text-align: center;
+  }
+  
+  .NuevoProyecto-form {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .NuevoProyecto-input {
+    margin-bottom: 20px;
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    font-size: 16px;
+    transition: all 0.3s ease;
+  }
+  
+  .NuevoProyecto-input:focus {
+    outline: none;
+    border-color: #1976d2;
+    box-shadow: 0 0 10px rgba(25, 118, 210, 0.2);
+  }
+  
+  .NuevoProyecto-button {
+    padding: 12px;
+    background-color: #1976d2;
+    color: #ffffff;
+    font-size: 18px;
+    font-weight: bold;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  .NuevoProyecto-button:hover {
+    background-color: #1565c0;
+  }
+  
+  .NuevoProyecto-button:active {
+    background-color: #0d47a1;
+  }
+  
