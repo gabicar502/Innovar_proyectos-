@@ -118,7 +118,7 @@ function Home() {
 
       <Box mt={5} textAlign="center" data-aos="fade-up">
         <Link to="/login">
-          <Button variant="contained" style={{ backgroundColor: '#00A9FF', color: '#fff', padding: '10px 30px', fontSize: '16px', borderRadius: '20px' }}>
+          <Button variant="contained" style={{ backgroundColor: 'white', color: 'black', padding: '10px 30px', fontSize: '16px', borderRadius: '20px' }}>
             Iniciar sesión
           </Button>
         </Link>
