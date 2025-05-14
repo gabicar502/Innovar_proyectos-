@@ -12,3 +12,26 @@ body {
   align-items: center; /* Centrado vertical */
   height: 100vh; /* Asegura que ocupe toda la pantalla */
 }
+
+/* Scrollbar moderno para Webkit (Chrome, Edge, Safari) */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #1976d2; /* azul MUI */
+  border-radius: 4px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #1976d2 transparent;
+}
