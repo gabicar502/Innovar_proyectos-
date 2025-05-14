@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
-import { Box, Typography, TextField, Button, Paper } from '@mui/material';
-import { addDoc, collection } from 'firebase/firestore';
-import { db } from '../../../config/firebase';
+import React, { useState, useEffect } from 'react';
+import {
+  Box, Typography, TextField, Button, Paper, MenuItem
+} from '@mui/material';
+import { addDoc, collection, getDocs, query, where } from 'firebase/firestore';
+import { db, auth } from '../../../config/firebase';
 import './NuevoProyecto.css';
 
 function NuevoProyecto() {
@@ -13,6 +15,19 @@ function NuevoProyecto() {
   const [institucion, setInstitucion] = useState('');
   const [integrantes, setIntegrantes] = useState('');
   const [observaciones, setObservaciones] = useState('');
+  const [docenteAsignado, setDocenteAsignado] = useState('');
+  const [docentes, setDocentes] = useState([]);
+
+  // Obtener docentes al cargar el componente
+  useEffect(() => {
+    const obtenerDocentes = async () => {
+      const q = query(collection(db, 'users'), where('role', '==', 'Docente'));
+      const querySnapshot = await getDocs(q);
+      const lista = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setDocentes(lista);
+    };
+    obtenerDocentes();
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -26,11 +41,16 @@ function NuevoProyecto() {
       institucion,
       integrantes: integrantes.split(',').map((item) => item.trim()),
       observaciones,
+      docenteAsignado,
+      creadoPor: auth.currentUser.uid,
+      estudiantesAsignados: [],
+      fechaCreacion: new Date()
     };
 
     try {
       const docRef = await addDoc(collection(db, 'proyectos'), proyectoData);
       console.log('Proyecto creado con ID: ', docRef.id);
+      // Limpiar formulario
       setTitulo('');
       setArea('');
       setObjetivos('');
@@ -39,6 +59,7 @@ function NuevoProyecto() {
       setInstitucion('');
       setIntegrantes('');
       setObservaciones('');
+      setDocenteAsignado('');
       alert('Proyecto creado exitosamente!');
     } catch (e) {
       console.error('Error al crear el proyecto: ', e);
@@ -101,7 +122,22 @@ function NuevoProyecto() {
             required
           />
           <TextField
-            label="Integrantes"
+            select
+            label="Asignar Docente"
+            fullWidth
+            value={docenteAsignado}
+            onChange={(e) => setDocenteAsignado(e.target.value)}
+            className="NuevoProyecto-input"
+            required
+          >
+            {docentes.map((docente) => (
+              <MenuItem key={docente.id} value={docente.id}>
+                {docente.name} {docente.lastName} - {docente.email}
+              </MenuItem>
+            ))}
+          </TextField>
+          <TextField
+            label="Integrantes (separados por coma)"
             fullWidth
             value={integrantes}
             onChange={(e) => setIntegrantes(e.target.value)}

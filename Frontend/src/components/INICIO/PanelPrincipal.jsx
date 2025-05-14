@@ -16,7 +16,6 @@ import { auth, db } from "../../../config/firebase";
 import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
 import Logo from "../../img/Innovar Proyectos - Logo.png";
 import './PanelPrincipal.css';
-import '../../components/PROYECTOS/NuevoProyecto'
 
 function PanelPrincipal() {
   const [open, setOpen] = useState(false);
@@ -63,97 +62,29 @@ function PanelPrincipal() {
 
   const handleNotifClose = () => setAnchorNotif(null);
 
-  const toggleSubmenu = (name) => {
-    setSubmenu((prev) => ({ ...prev, [name]: !prev[name] }));
-  };
-
   const renderMenuByRole = () => {
     switch (userRole) {
       case 'Estudiante':
         return (
-          <>
-            <ListItem button>
-              <ListItemIcon><HomeIcon /></ListItemIcon>
-              <ListItemText primary="Inicio" />
-            </ListItem>
-            <ListItem button onClick={() => toggleSubmenu('verProyectos')}>
-              <ListItemIcon><ListAltIcon /></ListItemIcon>
-              <ListItemText primary="Ver Proyectos" />
-              {submenu.verProyectos ? <ExpandLess /> : <ExpandMore />}
-            </ListItem>
-            <Collapse in={submenu.verProyectos} timeout="auto" unmountOnExit>
-              <List component="div" disablePadding>
-                <ListItem button sx={{ pl: 4 }}><ListItemText primary="Activos" /></ListItem>
-                <ListItem button sx={{ pl: 4 }}><ListItemText primary="En evaluación" /></ListItem>
-                <ListItem button sx={{ pl: 4 }}><ListItemText primary="Finalizados" /></ListItem>
-              </List>
-            </Collapse>
-          </>
+          <ListItem button onClick={() => navigate('/panel/mi-proyecto')}>
+            <ListItemIcon><ListAltIcon /></ListItemIcon>
+            <ListItemText primary="Mi Proyecto" />
+          </ListItem>
         );
       case 'Docente':
         return (
-          <>
-            <ListItem button>
-              <ListItemIcon><HomeIcon /></ListItemIcon>
-              <ListItemText primary="Inicio" />
-            </ListItem>
-            <ListItem button onClick={() => toggleSubmenu('Crear Proyectos')}>
-              <ListItemIcon><AddBoxIcon /></ListItemIcon>
-              <ListItemText primary="Proyectoss" />
-              {submenu.crearProyecto ? <ExpandLess /> : <ExpandMore />}
-            </ListItem>
-            <Collapse in={submenu.crearProyecto} timeout="auto" unmountOnExit>
-              <List component="div" disablePadding>
-                <ListItem button onClick={() => navigate('/panel/nuevo-proyecto')}>
-                  <ListItemText primary="Nuevo Proyectos" />
-                </ListItem>
-                <ListItem button><ListItemText primary="Hilos o Avances" /></ListItem>
-              </List>
-            </Collapse>
-            <ListItem button onClick={() => toggleSubmenu('reportes')}>
-              <ListItemIcon><AssignmentIcon /></ListItemIcon>
-              <ListItemText primary="Reportes" />
-              {submenu.reportes ? <ExpandLess /> : <ExpandMore />}
-            </ListItem>
-            <Collapse in={submenu.reportes} timeout="auto" unmountOnExit>
-              <List component="div" disablePadding>
-                <ListItem button sx={{ pl: 4 }}><ListItemText primary="Mensuales" /></ListItem>
-              </List>
-            </Collapse>
-          </>
+          <ListItem button onClick={() => navigate('/panel/mis-proyectos-docente')}>
+            <ListItemIcon><ListAltIcon /></ListItemIcon>
+            <ListItemText primary="Mis Proyectos" />
+          </ListItem>
         );
       case 'Coordinador':
         return (
           <>
-            <ListItem button>
-              <ListItemIcon><HomeIcon /></ListItemIcon>
-              <ListItemText primary="Inicio" />
-            </ListItem>
-            <ListItem button onClick={() => toggleSubmenu('crearProyecto')}>
+            <ListItem button onClick={() => navigate('/panel/nuevo-proyecto')}>
               <ListItemIcon><AddBoxIcon /></ListItemIcon>
-              <ListItemText primary="Proyectos" />
-              {submenu.crearProyecto ? <ExpandLess /> : <ExpandMore />}
+              <ListItemText primary="Nuevo Proyecto" />
             </ListItem>
-            <Collapse in={submenu.crearProyecto} timeout="auto" unmountOnExit>
-              <List component="div" disablePadding>
-                <ListItem button onClick={() => navigate('/panel/nuevo-proyecto')} sx={{ pl: 4 }}>
-                  <ListItemText primary="Nuevo Proyecto" />
-                </ListItem>
-                <ListItem button sx={{ pl: 4 }}><ListItemText primary="Hilos o Avances" /></ListItem>
-              </List>
-            </Collapse>
-            <ListItem button onClick={() => toggleSubmenu('reportes')}>
-              <ListItemIcon><AssignmentIcon /></ListItemIcon>
-              <ListItemText primary="Reportes" />
-              {submenu.reportes ? <ExpandLess /> : <ExpandMore />}
-            </ListItem>
-            <Collapse in={submenu.reportes} timeout="auto" unmountOnExit>
-              <List component="div" disablePadding>
-                <ListItem button sx={{ pl: 4 }}><ListItemText primary="Mensuales" /></ListItem>
-                <ListItem button sx={{ pl: 4 }}><ListItemText primary="Finales" /></ListItem>
-                <ListItem button sx={{ pl: 4 }}><ListItemText primary="Exportar PDF" /></ListItem>
-              </List>
-            </Collapse>
             <ListItem button onClick={() => navigate('/panel/usuarios')}>
               <ListItemIcon><PersonIcon /></ListItemIcon>
               <ListItemText primary="Gestión de Usuarios" />

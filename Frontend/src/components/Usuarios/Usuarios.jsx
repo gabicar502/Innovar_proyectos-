@@ -4,9 +4,10 @@ import {
   Button, IconButton, Dialog, DialogTitle, DialogContent, TextField, DialogActions
 } from '@mui/material';
 import { Delete, Edit } from '@mui/icons-material';
-import { db, auth } from '../../../config/firebase';
+import { db } from '../../../config/firebase';
+import { auth } from '../../../config/firebase';
 import {
-  collection, getDocs, addDoc, updateDoc, deleteDoc, doc, setDoc
+  collection, getDocs, addDoc, updateDoc, deleteDoc, doc
 } from 'firebase/firestore';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import './Usuarios.css';
@@ -14,58 +15,48 @@ import './Usuarios.css';
 function Usuarios() {
   const [usuarios, setUsuarios] = useState([]);
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({ nombre: '', correo: '', rol: '' });
+  const [form, setForm] = useState({
+    name: '',
+    lastName: '',
+    email: '',
+    role: '',
+    password: ''
+  });
   const [editId, setEditId] = useState(null);
 
   const obtenerUsuarios = async () => {
-    const querySnapshot = await getDocs(collection(db, 'usuarios'));
+    const querySnapshot = await getDocs(collection(db, 'users'));
     const datos = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     setUsuarios(datos);
   };
 
   const guardarUsuario = async () => {
-    try {
-      if (editId) {
-        // Editar usuario en Firestore
-        const docRef = doc(db, 'usuarios', editId);
-        await updateDoc(docRef, form);
-      } else {
-        // Crear en Firebase Auth
-        const defaultPassword = '123456'; // Contraseña temporal o configurable
-        const cred = await createUserWithEmailAndPassword(auth, form.correo, defaultPassword);
-        const uid = cred.user.uid;
-
-        // Guardar datos en colección 'users' (para login)
-        await setDoc(doc(db, 'users', uid), {
-          name: form.nombre,
-          lastName: '',
-          email: form.correo,
-          role: form.rol,
-          createdAt: new Date()
-        });
-
-        // Opcional: guardar también en colección auxiliar 'usuarios' para el panel
-        await addDoc(collection(db, 'usuarios'), form);
-      }
-
-      setOpen(false);
-      setForm({ nombre: '', correo: '', rol: '' });
-      setEditId(null);
-      obtenerUsuarios();
-    } catch (error) {
-      console.error("Error al guardar usuario:", error.message);
-      alert("Error: " + error.message);
+    if (editId) {
+      const docRef = doc(db, 'usuarios', editId);
+      await updateDoc(docRef, form);
+    } else {
+      await addDoc(collection(db, 'usuarios'), form);
     }
+    setOpen(false);
+    setForm({ nombre: '', correo: '', rol: '' });
+    setEditId(null);
+    obtenerUsuarios();
   };
 
   const editarUsuario = (usuario) => {
-    setForm({ nombre: usuario.nombre, correo: usuario.correo, rol: usuario.rol });
+    setForm({
+      name: usuario.name || '',
+      lastName: usuario.lastName || '',
+      email: usuario.email || '',
+      role: usuario.role || '',
+      password: '' // No se edita contraseña aquí
+    });
     setEditId(usuario.id);
     setOpen(true);
   };
 
   const eliminarUsuario = async (id) => {
-    await deleteDoc(doc(db, 'usuarios', id));
+    await deleteDoc(doc(db, 'users', id));
     obtenerUsuarios();
   };
 
@@ -90,9 +81,9 @@ function Usuarios() {
         <TableBody>
           {usuarios.map((u) => (
             <TableRow key={u.id}>
-              <TableCell>{u.nombre}</TableCell>
-              <TableCell>{u.correo}</TableCell>
-              <TableCell>{u.rol}</TableCell>
+              <TableCell>{u.name} {u.lastName}</TableCell>
+              <TableCell>{u.email}</TableCell>
+              <TableCell>{u.role}</TableCell>
               <TableCell>
                 <IconButton onClick={() => editarUsuario(u)}><Edit /></IconButton>
                 <IconButton onClick={() => eliminarUsuario(u.id)}><Delete /></IconButton>
@@ -108,23 +99,41 @@ function Usuarios() {
           <TextField
             label="Nombre"
             fullWidth
-            value={form.nombre}
-            onChange={(e) => setForm({ ...form, nombre: e.target.value })}
+            value={form.name}
+            onChange={(e) => setForm({ ...form, name: e.target.value })}
             sx={{ mb: 2 }}
           />
           <TextField
-            label="Correo"
+            label="Apellido"
             fullWidth
-            value={form.correo}
-            onChange={(e) => setForm({ ...form, correo: e.target.value })}
+            value={form.lastName}
+            onChange={(e) => setForm({ ...form, lastName: e.target.value })}
+            sx={{ mb: 2 }}
+          />
+          <TextField
+            label="Correo electrónico"
+            fullWidth
+            value={form.email}
+            onChange={(e) => setForm({ ...form, email: e.target.value })}
             sx={{ mb: 2 }}
           />
           <TextField
             label="Rol (Estudiante, Docente, Coordinador)"
             fullWidth
-            value={form.rol}
-            onChange={(e) => setForm({ ...form, rol: e.target.value })}
+            value={form.role}
+            onChange={(e) => setForm({ ...form, role: e.target.value })}
+            sx={{ mb: 2 }}
           />
+          {!editId && (
+            <TextField
+              label="Contraseña"
+              type="password"
+              fullWidth
+              value={form.password}
+              onChange={(e) => setForm({ ...form, password: e.target.value })}
+              sx={{ mb: 2 }}
+            />
+          )}
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpen(false)}>Cancelar</Button>
