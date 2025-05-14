@@ -5,11 +5,9 @@ import { auth, db } from '../../../config/firebase';
 import './MiProyectoEstudiante.css';
 
 function MiProyectoEstudiante() {
-  const [proyecto, setProyecto] = useState(null);
-  const [nombreDocente, setNombreDocente] = useState('');
-  const [nombresEstudiantes, setNombresEstudiantes] = useState([]);
+  const [proyectos, setProyectos] = useState([]);
 
-  const obtenerProyecto = async () => {
+  const obtenerProyectos = async () => {
     try {
       const q = query(
         collection(db, 'proyectos'),
@@ -18,65 +16,82 @@ function MiProyectoEstudiante() {
       const snapshot = await getDocs(q);
 
       if (!snapshot.empty) {
-        const docSnap = snapshot.docs[0];
-        const data = { id: docSnap.id, ...docSnap.data() };
-        setProyecto(data);
+        const lista = await Promise.all(
+          snapshot.docs.map(async (docSnap) => {
+            const data = { id: docSnap.id, ...docSnap.data() };
 
-        // Obtener nombre del docente
-        if (data.docenteAsignado) {
-          const docenteRef = doc(db, 'users', data.docenteAsignado);
-          const docenteSnap = await getDoc(docenteRef);
-          if (docenteSnap.exists()) {
-            const docenteData = docenteSnap.data();
-            setNombreDocente(`${docenteData.name} ${docenteData.lastName}`);
-          }
-        }
-
-        // Obtener nombres de estudiantes
-        if (Array.isArray(data.estudiantesAsignados)) {
-          const promesas = data.estudiantesAsignados.map(async (uid) => {
-            const estRef = doc(db, 'users', uid);
-            const estSnap = await getDoc(estRef);
-            if (estSnap.exists()) {
-              const d = estSnap.data();
-              return `${d.name} ${d.lastName}`;
+            // Obtener nombre del docente
+            let nombreDocente = 'No asignado';
+            if (data.docenteAsignado) {
+              const docenteRef = doc(db, 'users', data.docenteAsignado);
+              const docenteSnap = await getDoc(docenteRef);
+              if (docenteSnap.exists()) {
+                const docenteData = docenteSnap.data();
+                nombreDocente = `${docenteData.name} ${docenteData.lastName}`;
+              }
             }
-            return uid; // fallback si no existe
-          });
 
-          const nombres = await Promise.all(promesas);
-          setNombresEstudiantes(nombres);
-        }
+            // Obtener nombres de estudiantes
+            let nombresEstudiantes = [];
+            if (Array.isArray(data.estudiantesAsignados)) {
+              const nombres = await Promise.all(
+                data.estudiantesAsignados.map(async (uid) => {
+                  const estRef = doc(db, 'users', uid);
+                  const estSnap = await getDoc(estRef);
+                  if (estSnap.exists()) {
+                    const d = estSnap.data();
+                    return `${d.name} ${d.lastName}`;
+                  }
+                  return uid;
+                })
+              );
+              nombresEstudiantes = nombres;
+            }
 
+            return {
+              ...data,
+              nombreDocente,
+              nombresEstudiantes
+            };
+          })
+        );
+
+        setProyectos(lista);
       } else {
-        setProyecto(null);
+        setProyectos([]);
       }
     } catch (error) {
-      console.error("Error al obtener proyecto del estudiante:", error);
+      console.error('Error al obtener proyectos del estudiante:', error);
     }
   };
 
   useEffect(() => {
-    obtenerProyecto();
+    obtenerProyectos();
   }, []);
 
-  if (!proyecto) {
+  if (proyectos.length === 0) {
     return (
       <Box sx={{ p: 3 }}>
-        <Typography>No tienes un proyecto asignado todavía.</Typography>
+        <Typography>No tienes proyectos asignados todavía.</Typography>
       </Box>
     );
   }
 
   return (
-    <Paper sx={{ p: 3, maxWidth: 700 }}>
-      <Typography variant="h5" sx={{ mb: 2 }}>{proyecto.titulo}</Typography>
-      <Typography><strong>Área:</strong> {proyecto.area}</Typography>
-      <Typography><strong>Objetivos:</strong> {proyecto.objetivos}</Typography>
-      <Typography><strong>Institución:</strong> {proyecto.institucion}</Typography>
-      <Typography><strong>Docente asignado:</strong> {nombreDocente || 'No asignado'}</Typography>
-      <Typography><strong>Integrantes:</strong> {nombresEstudiantes.join(', ') || 'Ninguno'}</Typography>
-    </Paper>
+    <Box className="mi-proyecto-container">
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+        {proyectos.map((proyecto) => (
+          <Paper key={proyecto.id} className="mi-proyecto-paper">
+            <Typography className="mi-proyecto-titulo">{proyecto.titulo}</Typography>
+            <Typography className="mi-proyecto-detalle"><strong>Área:</strong> {proyecto.area}</Typography>
+            <Typography className="mi-proyecto-detalle"><strong>Objetivos:</strong> {proyecto.objetivos}</Typography>
+            <Typography className="mi-proyecto-detalle"><strong>Institución:</strong> {proyecto.institucion}</Typography>
+            <Typography className="mi-proyecto-detalle"><strong>Docente asignado:</strong> {proyecto.nombreDocente}</Typography>
+            <Typography className="mi-proyecto-detalle"><strong>Integrantes:</strong> {proyecto.nombresEstudiantes.join(', ') || 'Ninguno'}</Typography>
+          </Paper>
+        ))}
+      </Box>
+    </Box>
   );
 }
 
