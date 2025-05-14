@@ -7,11 +7,10 @@ import { Delete, Edit } from '@mui/icons-material';
 import { db } from '../../../config/firebase';
 import { auth } from '../../../config/firebase';
 import {
-  collection, getDocs, updateDoc, deleteDoc, doc, serverTimestamp,setDoc
+  collection, getDocs, addDoc, updateDoc, deleteDoc, doc
 } from 'firebase/firestore';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import './Usuarios.css';
-
 
 function Usuarios() {
   const [usuarios, setUsuarios] = useState([]);
@@ -32,39 +31,16 @@ function Usuarios() {
   };
 
   const guardarUsuario = async () => {
-    try {
-      if (editId) {
-        const docRef = doc(db, 'users', editId);
-        await updateDoc(docRef, {
-          name: form.name,
-          lastName: form.lastName,
-          email: form.email,
-          role: form.role
-        });
-      } else {
-        // Crear usuario en Firebase Auth
-        const userCredential = await createUserWithEmailAndPassword(auth, form.email, form.password);
-        const uid = userCredential.user.uid;
-
-        // Crear usuario en Firestore
-        await setDoc(doc(db, 'users', uid), {
-          name: form.name,
-          lastName: form.lastName,
-          email: form.email,
-          role: form.role,
-          createdAt: serverTimestamp()
-        });
-      }
-
-      setOpen(false);
-      setForm({ name: '', lastName: '', email: '', role: '', password: '' });
-      setEditId(null);
-      obtenerUsuarios();
-
-    } catch (error) {
-      console.error('Error al guardar usuario:', error.message);
-      alert(`Error: ${error.message}`);
+    if (editId) {
+      const docRef = doc(db, 'usuarios', editId);
+      await updateDoc(docRef, form);
+    } else {
+      await addDoc(collection(db, 'usuarios'), form);
     }
+    setOpen(false);
+    setForm({ nombre: '', correo: '', rol: '' });
+    setEditId(null);
+    obtenerUsuarios();
   };
 
   const editarUsuario = (usuario) => {

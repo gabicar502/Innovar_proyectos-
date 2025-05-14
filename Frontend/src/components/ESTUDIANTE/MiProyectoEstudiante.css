@@ -1,0 +1,27 @@
+.mi-proyecto-container {
+  display: flex;
+  justify-content: center;
+  padding: 20px;
+}
+
+.mi-proyecto-paper {
+  max-width: 700px;
+  width: 100%;
+  padding: 30px;
+  background-color: #f9fafb;
+  border-radius: 12px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+}
+
+.mi-proyecto-titulo {
+  font-weight: bold;
+  font-size: 24px;
+  color: #1a237e;
+  margin-bottom: 15px;
+}
+
+.mi-proyecto-detalle {
+  font-size: 16px;
+  color: #333;
+  margin-bottom: 10px;
+}
