@@ -2,10 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { Box, Typography, Paper } from '@mui/material';
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import { auth, db } from '../../../config/firebase';
+import { useNavigate } from 'react-router-dom';  // <-- Importa useNavigate
 import './MiProyectoEstudiante.css';
 
 function MiProyectoEstudiante() {
   const [proyectos, setProyectos] = useState([]);
+  const navigate = useNavigate();  // <-- Inicializa useNavigate
 
   const obtenerProyectos = async () => {
     try {
@@ -69,6 +71,10 @@ function MiProyectoEstudiante() {
     obtenerProyectos();
   }, []);
 
+  const handleClick = (id) => {
+    navigate(`/panel/detalle-proyecto/${id}`);  // <-- Navega a detalle con el id del proyecto
+  };
+
   if (proyectos.length === 0) {
     return (
       <Box sx={{ p: 3 }}>
@@ -81,7 +87,12 @@ function MiProyectoEstudiante() {
     <Box className="mi-proyecto-container">
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
         {proyectos.map((proyecto) => (
-          <Paper key={proyecto.id} className="mi-proyecto-paper">
+          <Paper
+            key={proyecto.id}
+            className="mi-proyecto-paper"
+            onClick={() => handleClick(proyecto.id)}  // <-- Agrega onClick a la tarjeta
+            sx={{ cursor: 'pointer' }} // <-- Cambia cursor para indicar que es clickeable
+          >
             <Typography className="mi-proyecto-titulo">{proyecto.titulo}</Typography>
             <Typography className="mi-proyecto-detalle"><strong>Área:</strong> {proyecto.area}</Typography>
             <Typography className="mi-proyecto-detalle"><strong>Objetivos:</strong> {proyecto.objetivos}</Typography>
