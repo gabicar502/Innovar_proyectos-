@@ -10,6 +10,7 @@ import NuevoProyecto from './components/PROYECTOS/NuevoProyecto';
 import MisProyectosDocente from './components/DOCENTE/MisProyectosDocente';
 import MiProyectoEstudiante from './components/ESTUDIANTE/MiProyectoEstudiante';
 import RutaPrivada from './components/RutasPrivada/RutaPrivada';
+import DetalleProyecto from './pages/DetalleProyecto/DetalleProyecto';
 
 function App() {
   return (
@@ -36,6 +37,15 @@ function App() {
           <Route element={<RutaPrivada roles={['Estudiante']} />}>
             <Route path="mi-proyecto" element={<MiProyectoEstudiante />} />
           </Route>
+
+
+          {/* Detalle del proyecto */}
+          {/* Estudiante: puede ver su proyecto asignado */}
+          <Route element={<RutaPrivada roles={['Estudiante', 'Docente']} />}>
+            <Route path="mi-proyecto" element={<MiProyectoEstudiante />} />
+            <Route path="detalle-proyecto/:id" element={<DetalleProyecto />} />  {/* <-- Aquí */}
+          </Route>
+
         </Route>
 
         {/* RUTA NO ENCONTRADA */}

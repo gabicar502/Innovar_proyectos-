@@ -1,25 +1,26 @@
+
 .NuevoProyecto-container {
   display: flex;
   justify-content: center;
-  align-items: center;
-  min-height: 100vh;
+  align-items: flex-start; /* alinea arriba para que el formulario crezca */
+  height: 80vh; /* toda la ventana */
   background: linear-gradient(135deg, #e0f2ff, #ffffff);
-  padding: 32px 16px;
-  overflow-y: auto;
+  padding: 16px; /* padding general */
+  box-sizing: border-box;
 }
 
 .NuevoProyecto-paper {
   width: 100%;
   max-width: 700px;
   background: #ffffff;
-  padding: 40px 30px;
+  padding: 24px 20px; /* menos padding para más espacio */
   border-radius: 20px;
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
-  overflow-y: auto;
-  max-height: 90vh;
+  height: 75vh; /* forzar altura para que ocupe casi toda la pantalla */
+  overflow-y: auto; /* scroll interno */
+  box-sizing: border-box;
 }
 
-/* Scrollbar personalizado */
 .NuevoProyecto-paper::-webkit-scrollbar {
   width: 10px;
 }
@@ -43,7 +44,7 @@
   font-size: 28px;
   font-weight: bold;
   color: #1976d2;
-  margin-bottom: 30px;
+  margin-bottom: 24px; /* un poco menos de margen */
 }
 
 .NuevoProyecto-form {
@@ -92,7 +93,8 @@
 /* Responsive */
 @media (max-width: 600px) {
   .NuevoProyecto-paper {
-    padding: 24px;
+    padding: 20px;
+    height: 85vh;
   }
 
   .NuevoProyecto-title {
