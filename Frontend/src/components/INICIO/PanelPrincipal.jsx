@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import {
   Box, Typography, List, ListItem, ListItemIcon, ListItemText,
-  Drawer, InputBase, Paper, Divider, Collapse, Avatar, Button, IconButton,
+  Drawer, InputBase, Paper, Divider, Avatar, Button, IconButton,
   Badge, Menu, MenuItem
 } from '@mui/material';
 import {
-  Search as SearchIcon, Home as HomeIcon, Assignment as AssignmentIcon,
+  Search as SearchIcon, Assignment as AssignmentIcon,
   AddBox as AddBoxIcon, ListAlt as ListAltIcon, ExitToApp as ExitToAppIcon,
-  ExpandLess, ExpandMore, Menu as MenuIcon, NotificationsNone as NotificationsNoneIcon,
+  Menu as MenuIcon, NotificationsNone as NotificationsNoneIcon,
   Person as PersonIcon
 } from '@mui/icons-material';
 import { signOut } from "firebase/auth";
@@ -20,7 +20,6 @@ import './PanelPrincipal.css';
 function PanelPrincipal() {
   const [open, setOpen] = useState(false);
   const [queryText, setQueryText] = useState('');
-  const [submenu, setSubmenu] = useState({});
   const [userName, setUserName] = useState('');
   const [userRole, setUserRole] = useState('');
   const [anchorNotif, setAnchorNotif] = useState(null);
@@ -63,20 +62,33 @@ function PanelPrincipal() {
   const handleNotifClose = () => setAnchorNotif(null);
 
   const renderMenuByRole = () => {
+    const reporteItem = (
+      <ListItem button onClick={() => navigate('/panel/lista-proyectos')}>
+        <ListItemIcon><AssignmentIcon /></ListItemIcon>
+        <ListItemText primary="Reportes de Proyectos" />
+      </ListItem>
+    );
+
     switch (userRole) {
       case 'Estudiante':
         return (
-          <ListItem button onClick={() => navigate('/panel/mi-proyecto')}>
-            <ListItemIcon><ListAltIcon /></ListItemIcon>
-            <ListItemText primary="Mi Proyecto" />
-          </ListItem>
+          <>
+            <ListItem button onClick={() => navigate('/panel/mi-proyecto')}>
+              <ListItemIcon><ListAltIcon /></ListItemIcon>
+              <ListItemText primary="Mi Proyecto" />
+            </ListItem>
+            {reporteItem}
+          </>
         );
       case 'Docente':
         return (
-          <ListItem button onClick={() => navigate('/panel/mis-proyectos-docente')}>
-            <ListItemIcon><ListAltIcon /></ListItemIcon>
-            <ListItemText primary="Mis Proyectos" />
-          </ListItem>
+          <>
+            <ListItem button onClick={() => navigate('/panel/mis-proyectos-docente')}>
+              <ListItemIcon><ListAltIcon /></ListItemIcon>
+              <ListItemText primary="Mis Proyectos" />
+            </ListItem>
+            {reporteItem}
+          </>
         );
       case 'Coordinador':
         return (
@@ -89,6 +101,7 @@ function PanelPrincipal() {
               <ListItemIcon><PersonIcon /></ListItemIcon>
               <ListItemText primary="Gestión de Usuarios" />
             </ListItem>
+            {reporteItem}
           </>
         );
       default:
@@ -98,6 +111,7 @@ function PanelPrincipal() {
 
   return (
     <Box sx={{ display: 'flex' }}>
+      {/* Menú lateral */}
       <Drawer
         anchor="left"
         open={open}
@@ -125,7 +139,9 @@ function PanelPrincipal() {
         </List>
       </Drawer>
 
+      {/* Contenido principal */}
       <Box component="main" sx={{ flexGrow: 1, bgcolor: '#f0f2f5', p: 3 }}>
+        {/* Barra superior */}
         <Paper sx={{ display: 'flex', alignItems: 'center', mb: 2, p: 1, px: 2 }}>
           <IconButton onClick={() => setOpen(true)}><MenuIcon /></IconButton>
           <SearchIcon />
@@ -142,6 +158,7 @@ function PanelPrincipal() {
           </IconButton>
         </Paper>
 
+        {/* Menú de notificaciones */}
         <Menu
           anchorEl={anchorNotif}
           open={Boolean(anchorNotif)}
@@ -158,6 +175,7 @@ function PanelPrincipal() {
           )}
         </Menu>
 
+        {/* Bienvenida y contenido dinámico */}
         <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#333', mb: 3 }}>
           Bienvenido, {userName}
         </Typography>
