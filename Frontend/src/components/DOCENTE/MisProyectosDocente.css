@@ -1,0 +1,31 @@
+.mis-proyectos-container {
+  max-width: 900px;
+  margin: auto;
+  padding: 2rem;
+}
+
+.mis-proyecto-card {
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+  border-radius: 10px;
+  background-color: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.mis-proyecto-card h6 {
+  font-weight: bold;
+  color: #333;
+}
+
+.mis-proyecto-estudiantes {
+  font-style: italic;
+  margin-top: 0.5rem;
+}
+
+.mis-proyecto-input {
+  padding: 0.5rem;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  flex: 1;
+}
