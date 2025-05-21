@@ -18,7 +18,7 @@ export default function Register() {
 
   const navigate = useNavigate();
 
-  const roles = ["Estudiante", "Docente", "Coordinador"];
+  const roles = ["Estudiante", "Docente"];
 
   const handleSubmit = async (e) => {
     e.preventDefault();

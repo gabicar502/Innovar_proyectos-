@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import {
   Box, Typography, Table, TableBody, TableCell, TableHead, TableRow,
-  Button, IconButton, Dialog, DialogTitle, DialogContent, TextField, DialogActions
+  Button, IconButton, Dialog, DialogTitle, DialogContent, TextField, DialogActions,
+  Snackbar, Alert
 } from '@mui/material';
 import { Delete, Edit } from '@mui/icons-material';
-import { db } from '../../../config/firebase';
-import { auth } from '../../../config/firebase';
+import { db, auth } from '../../../config/firebase';
 import {
-  collection, getDocs, addDoc, updateDoc, deleteDoc, doc
+  collection, getDocs, setDoc, updateDoc, deleteDoc, doc
 } from 'firebase/firestore';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import './Usuarios.css';
@@ -23,6 +23,11 @@ function Usuarios() {
     password: ''
   });
   const [editId, setEditId] = useState(null);
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: '',
+    severity: 'success'
+  });
 
   const obtenerUsuarios = async () => {
     const querySnapshot = await getDocs(collection(db, 'users'));
@@ -31,16 +36,41 @@ function Usuarios() {
   };
 
   const guardarUsuario = async () => {
-    if (editId) {
-      const docRef = doc(db, 'usuarios', editId);
-      await updateDoc(docRef, form);
-    } else {
-      await addDoc(collection(db, 'usuarios'), form);
+    try {
+      if (editId) {
+        const docRef = doc(db, 'users', editId);
+        await updateDoc(docRef, form);
+      } else {
+        const userCredential = await createUserWithEmailAndPassword(auth, form.email, form.password);
+        const newUser = userCredential.user;
+
+        await setDoc(doc(db, 'users', newUser.uid), {
+          name: form.name,
+          lastName: form.lastName,
+          email: form.email,
+          role: form.role,
+          createdAt: new Date()
+        });
+      }
+
+      setSnackbar({
+        open: true,
+        message: editId ? 'Usuario actualizado correctamente' : 'Usuario creado exitosamente',
+        severity: 'success'
+      });
+
+      setOpen(false);
+      setForm({ name: '', lastName: '', email: '', role: '', password: '' });
+      setEditId(null);
+      obtenerUsuarios();
+    } catch (error) {
+      console.error("Error al guardar usuario:", error);
+      setSnackbar({
+        open: true,
+        message: 'Error al guardar el usuario',
+        severity: 'error'
+      });
     }
-    setOpen(false);
-    setForm({ nombre: '', correo: '', rol: '' });
-    setEditId(null);
-    obtenerUsuarios();
   };
 
   const editarUsuario = (usuario) => {
@@ -49,7 +79,7 @@ function Usuarios() {
       lastName: usuario.lastName || '',
       email: usuario.email || '',
       role: usuario.role || '',
-      password: '' // No se edita contraseña aquí
+      password: ''
     });
     setEditId(usuario.id);
     setOpen(true);
@@ -118,7 +148,7 @@ function Usuarios() {
             sx={{ mb: 2 }}
           />
           <TextField
-            label="Rol (Estudiante, Docente, Coordinador)"
+            label="Rol (Estudiante, Docente)"
             fullWidth
             value={form.role}
             onChange={(e) => setForm({ ...form, role: e.target.value })}
@@ -140,6 +170,22 @@ function Usuarios() {
           <Button onClick={guardarUsuario}>Guardar</Button>
         </DialogActions>
       </Dialog>
+
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={4000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      >
+        <Alert
+          onClose={() => setSnackbar({ ...snackbar, open: false })}
+          severity={snackbar.severity}
+          variant="filled"
+          sx={{ width: '100%' }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }
