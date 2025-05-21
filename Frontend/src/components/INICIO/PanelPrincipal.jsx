@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
   Box, Typography, List, ListItem, ListItemIcon, ListItemText,
   Drawer, InputBase, Paper, Divider, Avatar, Button, IconButton,
-  Badge, Menu, MenuItem
+  Badge, Menu, MenuItem, Grid, Card, CardContent
 } from '@mui/material';
 import {
   Search as SearchIcon, Assignment as AssignmentIcon,
@@ -13,7 +13,7 @@ import {
 import { signOut } from "firebase/auth";
 import { useNavigate, Outlet } from "react-router-dom";
 import { auth, db } from "../../../config/firebase";
-import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
+import { collection, onSnapshot, getDocs, query, orderBy } from 'firebase/firestore';
 import Logo from "../../img/Innovar Proyectos - Logo.png";
 import './PanelPrincipal.css';
 
@@ -25,6 +25,7 @@ function PanelPrincipal() {
   const [anchorNotif, setAnchorNotif] = useState(null);
   const [notificaciones, setNotificaciones] = useState([]);
   const [leidas, setLeidas] = useState(false);
+  const [proyectos, setProyectos] = useState([]);
 
   const navigate = useNavigate();
 
@@ -47,6 +48,24 @@ function PanelPrincipal() {
     });
     return () => unsubscribe();
   }, []);
+
+  useEffect(() => {
+    const obtener = async () => {
+      const q = query(collection(db, 'proyectos'));
+      const snap = await getDocs(q);
+      const data = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setProyectos(data);
+    };
+    obtener();
+  }, []);
+
+  const filtrados = proyectos.filter(p => {
+    return (
+      p.nombre?.toLowerCase().includes(queryText.toLowerCase()) ||
+      p.autor?.toLowerCase().includes(queryText.toLowerCase()) ||
+      p.area?.toLowerCase().includes(queryText.toLowerCase())
+    );
+  });
 
   const handleLogout = async () => {
     await signOut(auth);
@@ -111,7 +130,6 @@ function PanelPrincipal() {
 
   return (
     <Box sx={{ display: 'flex' }}>
-      {/* Menú lateral */}
       <Drawer
         anchor="left"
         open={open}
@@ -139,9 +157,7 @@ function PanelPrincipal() {
         </List>
       </Drawer>
 
-      {/* Contenido principal */}
       <Box component="main" sx={{ flexGrow: 1, bgcolor: '#f0f2f5', p: 3 }}>
-        {/* Barra superior */}
         <Paper sx={{ display: 'flex', alignItems: 'center', mb: 2, p: 1, px: 2 }}>
           <IconButton onClick={() => setOpen(true)}><MenuIcon /></IconButton>
           <SearchIcon />
@@ -158,7 +174,6 @@ function PanelPrincipal() {
           </IconButton>
         </Paper>
 
-        {/* Menú de notificaciones */}
         <Menu
           anchorEl={anchorNotif}
           open={Boolean(anchorNotif)}
@@ -175,10 +190,29 @@ function PanelPrincipal() {
           )}
         </Menu>
 
-        {/* Bienvenida y contenido dinámico */}
         <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#333', mb: 3 }}>
           Bienvenido, {userName}
         </Typography>
+
+        {queryText && (
+          <Grid container spacing={2} sx={{ mb: 3 }}>
+            {filtrados.length > 0 ? (
+              filtrados.map(proj => (
+                <Grid item xs={12} sm={6} md={4} key={proj.id}>
+                  <Card sx={{ height: '100%' }}>
+                    <CardContent>
+                      <Typography variant="body1"><strong>Autor:</strong> {proj.autor || 'Sin autor'}</Typography>
+                      <Typography variant="body2">Área: {proj.area || 'Sin área'}</Typography>
+                      <Typography variant="body2">Estado: {proj.estado || 'Sin estado'}</Typography>
+                    </CardContent>
+                  </Card>
+                </Grid>
+              ))
+            ) : (
+              <Typography variant="body1" sx={{ ml: 2 }}>No se encontraron proyectos.</Typography>
+            )}
+          </Grid>
+        )}
 
         <Outlet />
       </Box>
