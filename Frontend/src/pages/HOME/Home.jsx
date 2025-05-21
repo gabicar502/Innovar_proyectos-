@@ -59,6 +59,13 @@ function Home() {
           alt="Innovar Proyectos Logo" 
           style={{ width: '600px', maxWidth: '90%', height: 'auto', marginBottom: '30px' }} 
         />
+        <Box mt={2}>
+          <Link to="/login">
+            <Button variant="contained" style={{ backgroundColor: 'white', color: 'black', padding: '10px 30px', fontSize: '16px', borderRadius: '20px' }}>
+              Iniciar sesión
+            </Button>
+          </Link>
+        </Box>
       </Box>
 
       <Container maxWidth="md" data-aos="fade-up">
@@ -115,14 +122,6 @@ function Home() {
           </Grid>
         </Box>
       </Container>
-
-      <Box mt={5} textAlign="center" data-aos="fade-up">
-        <Link to="/login">
-          <Button variant="contained" style={{ backgroundColor: 'white', color: 'black', padding: '10px 30px', fontSize: '16px', borderRadius: '20px' }}>
-            Iniciar sesión
-          </Button>
-        </Link>
-      </Box>
     </div>
   );
 }
