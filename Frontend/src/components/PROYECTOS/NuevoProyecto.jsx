@@ -46,11 +46,12 @@ function NuevoProyecto() {
       docenteAsignado,
       creadoPor: auth.currentUser.uid,
       estudiantesAsignados: [],
-      fechaCreacion: new Date()
+      fechaCreacion: new Date(),
+      estado: 'activo',  // Estado por defecto asignado aquí
     };
 
     try {
-      const docRef = await addDoc(collection(db, 'proyectos'), proyectoData);
+      await addDoc(collection(db, 'proyectos'), proyectoData);
       alert('¡Proyecto creado exitosamente!');
       navigate('/panel');
     } catch (e) {

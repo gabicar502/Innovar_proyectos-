@@ -49,7 +49,7 @@ function App() {
           </Route>
 
           {/* 🔐 Estudiante y Docente: pueden ver detalles del proyecto */}
-          <Route element={<RutaPrivada roles={['Estudiante', 'Docente']} />}>
+          <Route element={<RutaPrivada roles={['Estudiante', 'Docente', 'Coordinador']} />}>
             <Route path="detalle-proyecto/:id" element={<DetalleProyecto />} />
           </Route>
 

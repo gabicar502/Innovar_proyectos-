@@ -26,7 +26,6 @@ function GenerarReporte() {
           const data = docSnap.data();
           setProyecto(data);
 
-          // Obtener nombre del docente
           if (data.docenteAsignado) {
             const docenteRef = doc(db, 'users', data.docenteAsignado);
             const docenteSnap = await getDoc(docenteRef);
@@ -83,9 +82,10 @@ function GenerarReporte() {
     docPDF.text(`Fecha de Creación: ${fechaFormateada}`, 14, 60);
     docPDF.text(`Docente Asignado: ${docenteNombre || 'N/A'}`, 14, 70);
     docPDF.text(`Integrantes: ${integrantes}`, 14, 80);
+    docPDF.text(`Estado del Proyecto: ${proyecto.estado || 'No definido'}`, 14, 90);
 
     autoTable(docPDF, {
-      startY: 90,
+      startY: 100,
       head: [['Presupuesto', 'Objetivos', 'Observaciones']],
       body: [[
         proyecto.presupuesto || 'N/A',
@@ -94,7 +94,19 @@ function GenerarReporte() {
       ]]
     });
 
-    docPDF.save(`reporte_${id}.pdf`);
+    const ahora = new Date();
+    const hora = ahora.getHours().toString().padStart(2, '0');
+    const minutos = ahora.getMinutes().toString().padStart(2, '0');
+    const horaCompleta = `${hora}:${minutos}`;
+
+    const nombreLimpio = (proyecto.titulo || 'sin_titulo')
+      .replace(/[^\w\s]/gi, '')
+      .replace(/\s+/g, '_');
+
+    const nombreArchivo = `Reporte-${nombreLimpio}-${horaCompleta}.pdf`;
+
+    docPDF.save(nombreArchivo);
+
     setMensaje('✅ Reporte generado exitosamente');
     setMostrarSnack(true);
   };
@@ -108,9 +120,14 @@ function GenerarReporte() {
       {loading ? (
         <CircularProgress sx={{ mt: 4 }} />
       ) : proyecto ? (
-        <Button variant="contained" onClick={generarPDF}>
-          GENERAR REPORTE PDF
-        </Button>
+        <>
+          <Typography variant="subtitle1" sx={{ mt: 2 }}>
+            Estado del proyecto: <strong>{proyecto.estado || 'No definido'}</strong>
+          </Typography>
+          <Button variant="contained" sx={{ mt: 2 }} onClick={generarPDF}>
+            GENERAR REPORTE PDF
+          </Button>
+        </>
       ) : (
         <Typography color="error" sx={{ mt: 2 }}>
           Proyecto no encontrado.
