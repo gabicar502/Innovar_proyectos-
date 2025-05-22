@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import {
-  doc, getDoc, collection, addDoc, query, where, getDocs
+  doc, getDoc, collection, addDoc, query, where, getDocs, updateDoc
 } from 'firebase/firestore';
 import { db, auth, storage } from '../../../config/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import {
   Box, Typography, Paper, Tabs, Tab, Button, TextField, Input, Divider,
-  Dialog, DialogTitle, DialogContent, DialogActions
+  Dialog, DialogTitle, DialogContent, DialogActions, MenuItem
 } from '@mui/material';
 import './DetalleProyecto.css';
 
@@ -16,21 +16,25 @@ function TabPanel({ children, value, index }) {
   return <div hidden={value !== index}>{value === index && <Box sx={{ p: 2 }}>{children}</Box>}</div>;
 }
 
+const estadosPermitidos = ['Formulación', 'Evaluación', 'Activo', 'Inactivo', 'Finalizado'];
+
 export default function DetalleProyecto() {
   const { id } = useParams();
-  const [proyecto, setProyecto] = useState({ historialAvances: [] });
+  const [proyecto, setProyecto] = useState({ historialAvances: [], historialEstados: [] });
   const [tabIndex, setTabIndex] = useState(0);
   const [rolUsuario, setRolUsuario] = useState(null);
   const [nombreUsuario, setNombreUsuario] = useState('');
   const [descripcionAvance, setDescripcionAvance] = useState('');
   const [archivoAvance, setArchivoAvance] = useState(null);
   const [cargandoAvance, setCargandoAvance] = useState(false);
-
   const [openModal, setOpenModal] = useState(false);
   const [modalMensaje, setModalMensaje] = useState('');
   const [modalExito, setModalExito] = useState(true);
 
-  // Obtener datos del proyecto y avances
+  const [nuevoEstado, setNuevoEstado] = useState('');
+  const [observacionEstado, setObservacionEstado] = useState('');
+  const [cargandoEstado, setCargandoEstado] = useState(false);
+
   const obtenerProyecto = async () => {
     try {
       const docRef = doc(db, 'proyectos', id);
@@ -59,19 +63,23 @@ export default function DetalleProyecto() {
         const hitosSnap = await getDocs(hitosQuery);
         const historialAvances = hitosSnap.empty ? [] : hitosSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
+        const historialEstados = data.historialEstados || [];
+
         setProyecto({
           ...data,
           nombresEstudiantes: estudiantes,
           nombreDocente,
-          historialAvances
+          historialAvances,
+          historialEstados
         });
+
+        setNuevoEstado(data.estado || '');
       } else {
         setModalExito(false);
         setModalMensaje('No existe el proyecto solicitado.');
         setOpenModal(true);
       }
     } catch (error) {
-      console.error('Error al obtener detalle del proyecto:', error);
       setModalExito(false);
       setModalMensaje('Error al cargar el proyecto: ' + error.message);
       setOpenModal(true);
@@ -80,7 +88,6 @@ export default function DetalleProyecto() {
 
   useEffect(() => { obtenerProyecto(); }, [id]);
 
-  // Detectar usuario y rol
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
@@ -94,7 +101,6 @@ export default function DetalleProyecto() {
             setRolUsuario('sin-registro');
           }
         } catch (err) {
-          console.error('Error al obtener datos del usuario:', err);
           setRolUsuario('error');
         }
       } else {
@@ -119,15 +125,10 @@ export default function DetalleProyecto() {
     setCargandoAvance(true);
 
     try {
-      console.log("Iniciando subida de archivo...");
       const fecha = new Date().toISOString().split('T')[0];
       const storageRef = ref(storage, `avances/${id}/${Date.now()}_${archivoAvance.name}`);
-
       await uploadBytes(storageRef, archivoAvance);
-      console.log("Archivo subido.");
-
       const url = await getDownloadURL(storageRef);
-      console.log("URL obtenida:", url);
 
       const nuevoAvance = {
         descripcion: descripcionAvance,
@@ -135,12 +136,10 @@ export default function DetalleProyecto() {
         fecha,
         url,
         proyectoId: id,
-        creadoEn: new Date()  // para mejor orden futuro
+        creadoEn: new Date()
       };
 
-      console.log("Guardando avance en Firestore...");
-      const docRef = await addDoc(collection(db, 'hito'), nuevoAvance);
-      console.log("Documento creado con ID:", docRef.id);
+      await addDoc(collection(db, 'hito'), nuevoAvance);
 
       setDescripcionAvance('');
       setArchivoAvance(null);
@@ -148,7 +147,6 @@ export default function DetalleProyecto() {
       setModalMensaje('¡Avance subido exitosamente!');
       await obtenerProyecto();
     } catch (error) {
-      console.error("Error al subir avance:", error);
       setModalExito(false);
       setModalMensaje('Hubo un error al subir el avance: ' + error.message);
     } finally {
@@ -159,6 +157,53 @@ export default function DetalleProyecto() {
 
   const handleCerrarModal = () => setOpenModal(false);
 
+  const handleCambioEstado = async () => {
+    if (!nuevoEstado) {
+      setModalExito(false);
+      setModalMensaje('Debe seleccionar un estado.');
+      setOpenModal(true);
+      return;
+    }
+    if (!observacionEstado.trim()) {
+      setModalExito(false);
+      setModalMensaje('Debe escribir una observación para el cambio de estado.');
+      setOpenModal(true);
+      return;
+    }
+    setCargandoEstado(true);
+    try {
+      const proyectoRef = doc(db, 'proyectos', id);
+
+      const nuevoHistorial = {
+        fecha: new Date().toISOString().split('T')[0],
+        estado: nuevoEstado,
+        observacion: observacionEstado,
+        autor: nombreUsuario
+      };
+
+      const docSnap = await getDoc(proyectoRef);
+      const historialAnterior = docSnap.exists() && docSnap.data().historialEstados ? docSnap.data().historialEstados : [];
+
+      await updateDoc(proyectoRef, {
+        estado: nuevoEstado,
+        ultimaObservacionEstado: observacionEstado,
+        fechaActualizacionEstado: new Date(),
+        historialEstados: [...historialAnterior, nuevoHistorial]
+      });
+
+      setModalExito(true);
+      setModalMensaje('Estado del proyecto actualizado correctamente.');
+      setObservacionEstado('');
+      await obtenerProyecto();
+    } catch (error) {
+      setModalExito(false);
+      setModalMensaje('Error al actualizar el estado: ' + error.message);
+    } finally {
+      setCargandoEstado(false);
+      setOpenModal(true);
+    }
+  };
+
   if (!proyecto.titulo || rolUsuario === null) {
     return (
       <Box className="detalle-proyecto-container">
@@ -167,7 +212,7 @@ export default function DetalleProyecto() {
     );
   }
 
-  const tabs = [
+  const tabsTodos = [
     {
       label: 'Información del proyecto',
       content: (
@@ -187,11 +232,71 @@ export default function DetalleProyecto() {
           <Typography><strong>Estudiantes:</strong> {proyecto.nombresEstudiantes.join(', ')}</Typography>
         </>
       )
+    },
+    {
+      label: 'Ver estado del proyecto',
+      content: (
+        <Box>
+          <Typography variant="h6" gutterBottom>Estado actual del proyecto</Typography>
+          <Typography sx={{ mb: 2 }}>Estado: <strong>{proyecto.estado}</strong></Typography>
+
+          {rolUsuario === 'coordinador' && (
+            <Box sx={{ mt: 2, maxWidth: 400 }}>
+              <TextField
+                select
+                label="Nuevo estado"
+                value={nuevoEstado}
+                onChange={(e) => setNuevoEstado(e.target.value)}
+                fullWidth
+                margin="normal"
+              >
+                {estadosPermitidos.map((estado) => (
+                  <MenuItem key={estado} value={estado}>{estado}</MenuItem>
+                ))}
+              </TextField>
+
+              <TextField
+                label="Observación"
+                value={observacionEstado}
+                onChange={(e) => setObservacionEstado(e.target.value)}
+                multiline
+                rows={3}
+                fullWidth
+                margin="normal"
+              />
+
+              <Button
+                variant="contained"
+                onClick={handleCambioEstado}
+                disabled={cargandoEstado}
+              >
+                {cargandoEstado ? 'Actualizando...' : 'Cambiar estado'}
+              </Button>
+            </Box>
+          )}
+
+          <Divider sx={{ my: 3 }} />
+
+          <Typography variant="h6">Historial de estados</Typography>
+          {proyecto.historialEstados.length === 0 ? (
+            <Typography>No hay historial de estados registrado.</Typography>
+          ) : (
+            proyecto.historialEstados.map((estado, index) => (
+              <Box key={index} sx={{ my: 2, p: 2, border: '1px solid #ccc', borderRadius: '8px' }}>
+                <Typography><strong>Fecha:</strong> {estado.fecha}</Typography>
+                <Typography><strong>Estado:</strong> {estado.estado}</Typography>
+                <Typography><strong>Observación:</strong> {estado.observacion}</Typography>
+                <Typography><strong>Autor:</strong> {estado.autor}</Typography>
+              </Box>
+            ))
+          )}
+        </Box>
+      )
     }
   ];
 
-  if (rolUsuario !== 'docente') {
-    tabs.push({
+  if (rolUsuario !== 'docente' && rolUsuario !== 'coordinador') {
+    tabsTodos.push({
       label: 'Agregar avance',
       content: (
         <form onSubmit={handleSubirAvance} className="form-avance">
@@ -218,53 +323,33 @@ export default function DetalleProyecto() {
     });
   }
 
-  tabs.push({
+  tabsTodos.push({
     label: 'Historial de avances',
     content: proyecto.historialAvances.length === 0 ? (
       <Typography>No hay avances registrados.</Typography>
     ) : (
-      proyecto.historialAvances
-        .sort((a, b) => (a.creadoEn?.seconds || 0) - (b.creadoEn?.seconds || 0))
-        .map((avance, idx) => (
-          <Box key={avance.id || idx} sx={{ mb: 2 }}>
-            <Typography><strong>Fecha:</strong> {avance.fecha}</Typography>
-            <Typography><strong>Responsable:</strong> {avance.autor}</Typography>
-            <Typography><strong>Descripción:</strong> {avance.descripcion}</Typography>
-            <Typography>
-              <strong>Archivo:</strong> <a href={avance.url} target="_blank" rel="noreferrer">Ver documento</a>
-            </Typography>
-            <Divider sx={{ my: 1 }} />
-          </Box>
-        ))
+      proyecto.historialAvances.map((avance, index) => (
+        <Box key={index} sx={{ my: 2, p: 2, border: '1px solid #ccc', borderRadius: '8px' }}>
+          <Typography><strong>Fecha:</strong> {avance.fecha}</Typography>
+          <Typography><strong>Autor:</strong> {avance.autor}</Typography>
+          <Typography><strong>Descripción:</strong> {avance.descripcion}</Typography>
+          <a href={avance.url} target="_blank" rel="noopener noreferrer">Ver archivo</a>
+        </Box>
+      ))
     )
   });
 
   return (
     <Box className="detalle-proyecto-container">
-      <Paper className="detalle-proyecto-paper">
-        <Typography className="detalle-proyecto-titulo">
-          {proyecto.titulo}
-        </Typography>
-
-        <Typography variant="subtitle1" sx={{ mb: 2 }}>
-          <strong>Rol del usuario conectado:</strong> {rolUsuario}
-        </Typography>
-
-        <Tabs
-          value={tabIndex}
-          onChange={handleTabChange}
-          variant="scrollable"
-          scrollButtons="auto"
-        >
-          {tabs.map((tab, i) => (
-            <Tab key={i} label={tab.label} />
+      <Paper sx={{ p: 2 }}>
+        <Typography variant="h5" gutterBottom>{proyecto.titulo}</Typography>
+        <Tabs value={tabIndex} onChange={handleTabChange}>
+          {tabsTodos.map((tab, index) => (
+            <Tab key={index} label={tab.label} />
           ))}
         </Tabs>
-
-        <Divider className="detalle-proyecto-divider" />
-
-        {tabs.map((tab, i) => (
-          <TabPanel key={i} value={tabIndex} index={i}>
+        {tabsTodos.map((tab, index) => (
+          <TabPanel key={index} value={tabIndex} index={index}>
             {tab.content}
           </TabPanel>
         ))}
@@ -276,9 +361,7 @@ export default function DetalleProyecto() {
           <Typography>{modalMensaje}</Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCerrarModal} autoFocus>
-            Cerrar
-          </Button>
+          <Button onClick={handleCerrarModal}>Cerrar</Button>
         </DialogActions>
       </Dialog>
     </Box>
